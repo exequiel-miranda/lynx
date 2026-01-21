@@ -49,16 +49,12 @@ const Questionnaire = () => {
     };
 
     const handleSubmitAll = async () => {
-        // Check if all questions have been answered
-        const unansweredQuestions = questions.filter(q => !answers[q._id] || answers[q._id].trim() === '');
+        // Check if at least 5 questions have been answered
+        const answeredQuestions = questions.filter(q => answers[q._id] && answers[q._id].trim() !== '');
+        const minRequired = 5;
 
-        if (unansweredQuestions.length > 0) {
-            setError(`Por favor responde todas las preguntas. Faltan ${unansweredQuestions.length} pregunta(s).`);
-            // Scroll to first unanswered question
-            const firstUnanswered = document.getElementById(`question-${unansweredQuestions[0]._id}`);
-            if (firstUnanswered) {
-                firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        if (answeredQuestions.length < minRequired) {
+            setError(`Por favor responde al menos ${minRequired} preguntas. Has respondido ${answeredQuestions.length}.`);
             return;
         }
 
@@ -66,8 +62,8 @@ const Questionnaire = () => {
         setError('');
 
         try {
-            // Submit all answers
-            const submitPromises = questions.map(question =>
+            // Submit only answered questions
+            const submitPromises = answeredQuestions.map(question =>
                 answerService.submitAnswer(question._id, answers[question._id])
             );
 
@@ -95,15 +91,16 @@ const Questionnaire = () => {
     }
 
     if (completed) {
+        const answeredCount = Object.keys(answers).filter(key => answers[key] && answers[key].trim() !== '').length;
         return (
             <div className="container container-sm" style={{ paddingTop: '4rem' }}>
                 <div className="card text-center">
                     <h1>¡Cuestionario Completado! 🎉</h1>
                     <p className="text-muted mb-xl">
-                        Has respondido todas las preguntas. Tus respuestas han sido guardadas exitosamente.
+                        Tus respuestas han sido guardadas exitosamente.
                     </p>
                     <div className="alert alert-success">
-                        Total de preguntas respondidas: {questions.length}
+                        Total de preguntas respondidas: {answeredCount} de {questions.length}
                     </div>
                     <button onClick={handleLogout} className="btn btn-primary">
                         Cerrar Sesión
@@ -158,7 +155,7 @@ const Questionnaire = () => {
 
             {/* Info message */}
             <div className="alert alert-info">
-                💡 Responde todas las preguntas y luego haz clic en "Enviar Todas las Respuestas" al final.
+                💡 Responde al menos 5 preguntas. Puedes responder más si lo deseas. Luego haz clic en "Enviar Respuestas" al final.
             </div>
 
             {/* All Questions */}
@@ -183,7 +180,7 @@ const Questionnaire = () => {
                     disabled={submitting}
                     style={{ boxShadow: 'var(--shadow-lg)' }}
                 >
-                    {submitting ? 'Guardando respuestas...' : `Enviar Todas las Respuestas (${answeredCount}/${questions.length})`}
+                    {submitting ? 'Guardando respuestas...' : `Enviar Respuestas (${answeredCount}/${questions.length})`}
                 </button>
             </div>
         </div>
